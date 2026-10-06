@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cloud Security Dashboard</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header class="header">
+    <div class="header-left">
+      <div class="logo">
+        <span class="logo-icon">&#9632;</span>
+        <span class="logo-text">CloudShield</span>
+      </div>
+      <nav class="nav-links">
+        <a href="#" class="nav-link active">Dashboard</a>
+        <a href="#" class="nav-link">Assets</a>
+        <a href="#" class="nav-link">Alerts</a>
+        <a href="#" class="nav-link">Reports</a>
+      </nav>
+    </div>
+    <div class="header-right">
+      <span class="last-updated" id="lastUpdated">Last updated: --</span>
+      <button class="btn btn-primary" id="refreshBtn" onclick="refreshDashboard()">
+        <span class="btn-icon">&#8635;</span> Refresh
+      </button>
+      <button class="btn btn-scan" id="scanBtn" onclick="runSecurityScan()">
+        <span class="btn-icon">&#9654;</span> Run Scan
+      </button>
+    </div>
+  </header>
+
+  <!-- ===== SCAN STATUS BANNER ===== -->
+  <div class="scan-banner" id="scanBanner" aria-live="polite"></div>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <main class="main">
+
+    <!-- Security Score + Summary KPIs -->
+    <section class="kpi-row" aria-label="Key performance indicators">
+
+      <!-- Security Score Card -->
+      <div class="card score-card">
+        <div class="score-ring-wrapper">
+          <svg class="score-ring" viewBox="0 0 120 120" aria-hidden="true">
+            <circle class="ring-bg"   cx="60" cy="60" r="50" />
+            <circle class="ring-fill" cx="60" cy="60" r="50" id="scoreRing" />
+          </svg>
+          <div class="score-label">
+            <span class="score-value" id="scoreValue">82</span>
+            <span class="score-max">/100</span>
+          </div>
+        </div>
+        <div class="score-meta">
+          <p class="card-title">Security Score</p>
+          <p class="score-grade" id="scoreGrade">Good</p>
+        </div>
+      </div>
+
+      <!-- Total Assets -->
+      <div class="card kpi-card">
+        <div class="kpi-icon assets-icon" aria-hidden="true">&#9729;</div>
+        <div class="kpi-content">
+          <p class="kpi-value" id="totalAssets">248</p>
+          <p class="kpi-label">Total Assets Monitored</p>
+          <p class="kpi-sub" id="assetsSub">&#9650; 12 added this week</p>
+        </div>
+      </div>
+
+      <!-- Security Issues -->
+      <div class="card kpi-card">
+        <div class="kpi-icon issues-icon" aria-hidden="true">&#9888;</div>
+        <div class="kpi-content">
+          <p class="kpi-value" id="totalIssues">34</p>
+          <p class="kpi-label">Security Issues</p>
+          <p class="kpi-sub" id="issuesSub">&#9660; 5 resolved today</p>
+        </div>
+      </div>
+
+      <!-- Open Incidents -->
+      <div class="card kpi-card">
+        <div class="kpi-icon incidents-icon" aria-hidden="true">&#128681;</div>
+        <div class="kpi-content">
+          <p class="kpi-value" id="openIncidents">7</p>
+          <p class="kpi-label">Open Incidents</p>
+          <p class="kpi-sub" id="incidentsSub">2 require immediate action</p>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Severity Breakdown -->
+    <section class="severity-row" aria-label="Issues by severity">
+      <div class="card severity-card critical">
+        <div class="sev-header">
+          <span class="sev-dot"></span>
+          <span class="sev-label">Critical</span>
+        </div>
+        <p class="sev-count" id="criticalCount">3</p>
+        <p class="sev-desc">Immediate action required</p>
+      </div>
+      <div class="card severity-card high">
+        <div class="sev-header">
+          <span class="sev-dot"></span>
+          <span class="sev-label">High</span>
+        </div>
+        <p class="sev-count" id="highCount">9</p>
+        <p class="sev-desc">Resolve within 24 hours</p>
+      </div>
+      <div class="card severity-card medium">
+        <div class="sev-header">
+          <span class="sev-dot"></span>
+          <span class="sev-label">Medium</span>
+        </div>
+        <p class="sev-count" id="mediumCount">14</p>
+        <p class="sev-desc">Resolve within 7 days</p>
+      </div>
+      <div class="card severity-card low">
+        <div class="sev-header">
+          <span class="sev-dot"></span>
+          <span class="sev-label">Low</span>
+        </div>
+        <p class="sev-count" id="lowCount">8</p>
+        <p class="sev-desc">Monitor and schedule fix</p>
+      </div>
+    </section>
+
+    <!-- Bottom grid: Alerts table + Infrastructure + Recommendations -->
+    <div class="bottom-grid">
+
+      <!-- Recent Security Alerts -->
+      <section class="card alerts-section" aria-label="Recent security alerts">
+        <div class="section-header">
+          <h2 class="section-title">Recent Security Alerts</h2>
+          <!-- Filter buttons -->
+          <div class="filter-bar" role="group" aria-label="Filter alerts by severity">
+            <button class="filter-btn active" data-filter="all"    onclick="filterAlerts('all')">All</button>
+            <button class="filter-btn"         data-filter="critical" onclick="filterAlerts('critical')">Critical</button>
+            <button class="filter-btn"         data-filter="high"  onclick="filterAlerts('high')">High</button>
+            <button class="filter-btn"         data-filter="medium" onclick="filterAlerts('medium')">Medium</button>
+            <button class="filter-btn"         data-filter="low"   onclick="filterAlerts('low')">Low</button>
+          </div>
+        </div>
+
+        <div class="table-wrapper" role="region" aria-label="Alerts table" tabindex="0">
+          <table class="alerts-table" id="alertsTable">
+            <thead>
+              <tr>
+                <th scope="col">Severity</th>
+                <th scope="col">Alert</th>
+                <th scope="col">Resource</th>
+                <th scope="col">Region</th>
+                <th scope="col">Time</th>
+                <th scope="col">Status</th>
+              </tr>
+            </thead>
+            <tbody id="alertsBody">
+              <!-- Populated by JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Right column -->
+      <aside class="right-col">
+
+        <!-- Cloud Infrastructure Status -->
+        <section class="card infra-section" aria-label="Cloud infrastructure status">
+          <h2 class="section-title">Cloud Infrastructure</h2>
+          <ul class="infra-list" id="infraList">
+            <!-- Populated by JavaScript -->
+          </ul>
+        </section>
+
+        <!-- Security Recommendations -->
+        <section class="card recs-section" aria-label="Security recommendations">
+          <h2 class="section-title">Recommendations</h2>
+          <ul class="recs-list" id="recsList">
+            <!-- Populated by JavaScript -->
+          </ul>
+        </section>
+
+      </aside>
+    </div>
+
+  </main>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer">
+    <span>CloudShield &copy; 2026 &mdash; Cloud Security Dashboard</span>
+    <span>Built with Kiro &bull; AWS User Group Madurai</span>
+  </footer>
+
+  <script src="js/dashboard.js"></script>
+</body>
+</html>
